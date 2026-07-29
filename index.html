@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Mensajería</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #f5f5f5;
+            color: #2C2C2A;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .header {
+            margin-bottom: 2rem;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            color: #042C53;
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .loading, .error {
+            padding: 2rem;
+            text-align: center;
+            background: white;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+        
+        .error {
+            background: #FCEBEB;
+            color: #A32D2D;
+            border: 1px solid #F09595;
+        }
+        
+        .filtros {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 2rem;
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .filtros select {
+            padding: 10px 12px;
+            border: 1px solid #D3D1C7;
+            border-radius: 6px;
+            background: white;
+            color: #2C2C2A;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .filtros select:hover {
+            border-color: #185FA5;
+        }
+        
+        .kpis {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 2rem;
+        }
+        
+        .kpiCard {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            border-left: 4px solid #185FA5;
+        }
+        
+        .kpiLabel {
+            font-size: 12px;
+            color: #5F5E5A;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        
+        .kpiValue {
+            font-size: 36px;
+            font-weight: 700;
+            color: #185FA5;
+        }
+        
+        .chartsGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .chartContainer {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .chartContainer h3 {
+            font-size: 16px;
+            color: #042C53;
+            margin: 0 0 1rem 0;
+            font-weight: 600;
+        }
+        
+        .tablaContainer {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+        
+        .tablaContainer h3 {
+            font-size: 16px;
+            color: #042C53;
+            margin: 0 0 1rem 0;
+            font-weight: 600;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        table thead {
+            background: #E6F1FB;
+            border-bottom: 2px solid #185FA5;
+        }
+        
+        table th {
+            padding: 12px;
+            text-align: left;
+            color: #042C53;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+        
+        table td {
+            padding: 12px;
+            border-bottom: 1px solid #D3D1C7;
+            color: #2C2C2A;
+        }
+        
+        table tbody tr:hover {
+            background: #F1EFE8;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .filtros {
+                grid-template-columns: 1fr;
+            }
+            
+            .chartsGrid {
+                grid-template-columns: 1fr;
+            }
+            
+            .kpis {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Dashboard Mensajería</h1>
+        </div>
+        
+        <div class="filtros">
+            <select id="mesFilter" onchange="aplicarFiltros()">
+                <option value="">Todos los meses</option>
+            </select>
+            <select id="semanaFilter" onchange="aplicarFiltros()">
+                <option value="">Todas las semanas</option>
+            </select>
+            <select id="zonaFilter" onchange="aplicarFiltros()">
+                <option value="">Todas las zonas</option>
+            </select>
+            <select id="pilarFilter" onchange="aplicarFiltros()">
+                <option value="">Todos los pilares</option>
+            </select>
+            <select id="marcaFilter" onchange="aplicarFiltros()">
+                <option value="">Todas las marcas</option>
+            </select>
+        </div>
+        
+        <div id="errorContainer"></div>
+        
+        <div class="kpis">
+            <div class="kpiCard">
+                <div class="kpiLabel">Tasa Lectura WhatsApp</div>
+                <div class="kpiValue" id="kpiWS">-</div>
+            </div>
+            <div class="kpiCard">
+                <div class="kpiLabel">Tasa Lectura Viva Engage</div>
+                <div class="kpiValue" id="kpiVE">-</div>
+            </div>
+            <div class="kpiCard">
+                <div class="kpiLabel">Total Envíos</div>
+                <div class="kpiValue" id="kpiTotal">-</div>
+            </div>
+            <div class="kpiCard">
+                <div class="kpiLabel">Total Leídos</div>
+                <div class="kpiValue" id="kpiLeidos">-</div>
+            </div>
+        </div>
+        
+        <div class="chartsGrid">
+            <div class="chartContainer">
+                <h3>Envíos por Zona</h3>
+                <canvas id="chartZonas"></canvas>
+            </div>
+            <div class="chartContainer">
+                <h3>Envíos por Marca</h3>
+                <canvas id="chartMarcas"></canvas>
+            </div>
+        </div>
+        
+        <div class="tablaContainer">
+            <h3>Lectura por Zona</h3>
+            <table id="tablaZonas">
+                <thead>
+                    <tr>
+                        <th>Zona</th>
+                        <th>Envíos WS</th>
+                        <th>Leídos WS</th>
+                        <th>% WS</th>
+                        <th>Envíos VE</th>
+                        <th>Leídos VE</th>
+                        <th>% VE</th>
+                    </tr>
+                </thead>
+                <tbody id="cuerpoZonas"></tbody>
+            </table>
+        </div>
+        
+        <div class="tablaContainer">
+            <h3>Lectura por Marca</h3>
+            <table id="tablaMarcas">
+                <thead>
+                    <tr>
+                        <th>Marca</th>
+                        <th>Envíos WS</th>
+                        <th>Leídos WS</th>
+                        <th>% WS</th>
+                        <th>Envíos VE</th>
+                        <th>Leídos VE</th>
+                        <th>% VE</th>
+                    </tr>
+                </thead>
+                <tbody id="cuerpoMarcas"></tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        const SHEET_ID = '1RC1VLZsbR0hpH8XuQUPT78A5RZDgiqyj6euXyxWROmQ';
+        const SHEET_NAME = 'Datos';
+        const API_KEY = 'AIzaSyDpC0Y_5A8F4VJ8qQqZqJkN8uCrU5b9Qg0';
+        
+        let datos = [];
+        let charts = {};
+        
+        async function cargarDatos() {
+            try {
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_NAME}?key=${API_KEY}`;
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (!data.values || data.values.length < 2) {
+                    throw new Error('No hay datos en el Sheet');
+                }
+                
+                const headers = data.values[0];
+                datos = data.values.slice(1).map(row => {
+                    const obj = {};
+                    headers.forEach((header, index) => {
+                        obj[header.trim()] = row[index] || '';
+                    });
+                    return obj;
+                });
+                
+                llenarFiltros();
+                aplicarFiltros();
+                
+            } catch (error) {
+                document.getElementById('errorContainer').innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+        
+        function llenarFiltros() {
+            const meses = [...new Set(datos.map(d => d['Mes']))].filter(Boolean).sort();
+            const semanas = [...new Set(datos.map(d => d['Semana']))].filter(Boolean).sort((a, b) => a - b);
+            const zonas = [...new Set(datos.map(d => d['Zona']))].filter(Boolean).sort();
+            const pilares = [...new Set(datos.map(d => d['Pilar']))].filter(Boolean).sort();
+            const marcas = [...new Set(datos.map(d => d['Marca']))].filter(Boolean).sort();
+            
+            meses.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.text = m;
+                document.getElementById('mesFilter').appendChild(opt);
+            });
+            
+            semanas.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s;
+                opt.text = `Semana ${s}`;
+                document.getElementById('semanaFilter').appendChild(opt);
+            });
+            
+            zonas.forEach(z => {
+                const opt = document.createElement('option');
+                opt.value = z;
+                opt.text = z;
+                document.getElementById('zonaFilter').appendChild(opt);
+            });
+            
+            pilares.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p;
+                opt.text = p;
+                document.getElementById('pilarFilter').appendChild(opt);
+            });
+            
+            marcas.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.text = m;
+                document.getElementById('marcaFilter').appendChild(opt);
+            });
+        }
+        
+        function aplicarFiltros() {
+            const mes = document.getElementById('mesFilter').value;
+            const semana = document.getElementById('semanaFilter').value;
+            const zona = document.getElementById('zonaFilter').value;
+            const pilar = document.getElementById('pilarFilter').value;
+            const marca = document.getElementById('marcaFilter').value;
+            
+            let filtered = datos.filter(d => {
+                return (!mes || d['Mes'] === mes) &&
+                       (!semana || d['Semana'] === semana) &&
+                       (!zona || d['Zona'] === zona) &&
+                       (!pilar || d['Pilar'] === pilar) &&
+                       (!marca || d['Marca'] === marca);
+            });
+            
+            actualizarKPIs(filtered);
+            actualizarGraficos(filtered);
+            actualizarTablas(filtered);
+        }
+        
+        function actualizarKPIs(filtered) {
+            if (filtered.length === 0) {
+                document.getElementById('kpiWS').textContent = '0%';
+                document.getElementById('kpiVE').textContent = '0%';
+                document.getElementById('kpiTotal').textContent = '0';
+                document.getElementById('kpiLeidos').textContent = '0';
+                return;
+            }
+            
+            const enviosWS = filtered.reduce((sum, d) => sum + (parseInt(d['Envios_WS']) || 0), 0);
+            const leidosWS = filtered.reduce((sum, d) => sum + (parseInt(d['Leidos_WS']) || 0), 0);
+            const enviosVE = filtered.reduce((sum, d) => sum + (parseInt(d['Envios_VivaEngage']) || 0), 0);
+            const leidosVE = filtered.reduce((sum, d) => sum + (parseInt(d['Leidos_VivaEngage']) || 0), 0);
+            
+            const tasaWS = enviosWS > 0 ? Math.round((leidosWS / enviosWS) * 100) : 0;
+            const tasaVE = enviosVE > 0 ? Math.round((leidosVE / enviosVE) * 100) : 0;
+            
+            document.getElementById('kpiWS').textContent = `${tasaWS}%`;
+            document.getElementById('kpiVE').textContent = `${tasaVE}%`;
+            document.getElementById('kpiTotal').textContent = (enviosWS + enviosVE).toLocaleString();
+            document.getElementById('kpiLeidos').textContent = (leidosWS + leidosVE).toLocaleString();
+        }
+        
+        function actualizarGraficos(filtered) {
+            const zonas = {};
+            filtered.forEach(d => {
+                if (!zonas[d['Zona']]) zonas[d['Zona']] = 0;
+                zonas[d['Zona']] += (parseInt(d['Envios_WS']) || 0) + (parseInt(d['Envios_VivaEngage']) || 0);
+            });
+            
+            const marcas = {};
+            filtered.forEach(d => {
+                if (!marcas[d['Marca']]) marcas[d['Marca']] = 0;
+                marcas[d['Marca']] += (parseInt(d['Envios_WS']) || 0) + (parseInt(d['Envios_VivaEngage']) || 0);
+            });
+            
+            const ctxZ = document.getElementById('chartZonas').getContext('2d');
+            if (charts.zonas) charts.zonas.destroy();
+            charts.zonas = new Chart(ctxZ, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(zonas).sort(),
+                    datasets: [{
+                        label: 'Envíos',
+                        data: Object.keys(zonas).sort().map(z => zonas[z]),
+                        backgroundColor: '#185FA5'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+            
+            const ctxM = document.getElementById('chartMarcas').getContext('2d');
+            if (charts.marcas) charts.marcas.destroy();
+            charts.marcas = new Chart(ctxM, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(marcas).sort(),
+                    datasets: [{
+                        label: 'Envíos',
+                        data: Object.keys(marcas).sort().map(m => marcas[m]),
+                        backgroundColor: '#378ADD'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+        
+        function actualizarTablas(filtered) {
+            const zonas = {};
+            filtered.forEach(d => {
+                if (!zonas[d['Zona']]) {
+                    zonas[d['Zona']] = { enviosWS: 0, leidosWS: 0, enviosVE: 0, leidosVE: 0 };
+                }
+                zonas[d['Zona']].enviosWS += parseInt(d['Envios_WS']) || 0;
+                zonas[d['Zona']].leidosWS += parseInt(d['Leidos_WS']) || 0;
+                zonas[d['Zona']].enviosVE += parseInt(d['Envios_VivaEngage']) || 0;
+                zonas[d['Zona']].leidosVE += parseInt(d['Leidos_VivaEngage']) || 0;
+            });
+            
+            const marcas = {};
+            filtered.forEach(d => {
+                if (!marcas[d['Marca']]) {
+                    marcas[d['Marca']] = { enviosWS: 0, leidosWS: 0, enviosVE: 0, leidosVE: 0 };
+                }
+                marcas[d['Marca']].enviosWS += parseInt(d['Envios_WS']) || 0;
+                marcas[d['Marca']].leidosWS += parseInt(d['Leidos_WS']) || 0;
+                marcas[d['Marca']].enviosVE += parseInt(d['Envios_VivaEngage']) || 0;
+                marcas[d['Marca']].leidosVE += parseInt(d['Leidos_VivaEngage']) || 0;
+            });
+            
+            const tbodyZ = document.getElementById('cuerpoZonas');
+            tbodyZ.innerHTML = '';
+            Object.keys(zonas).sort().forEach(zona => {
+                const z = zonas[zona];
+                const tasaWS = z.enviosWS > 0 ? Math.round((z.leidosWS / z.enviosWS) * 100) : 0;
+                const tasaVE = z.enviosVE > 0 ? Math.round((z.leidosVE / z.enviosVE) * 100) : 0;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${zona}</td><td>${z.enviosWS}</td><td>${z.leidosWS}</td><td>${tasaWS}%</td><td>${z.enviosVE}</td><td>${z.leidosVE}</td><td>${tasaVE}%</td>`;
+                tbodyZ.appendChild(tr);
+            });
+            
+            const tbodyM = document.getElementById('cuerpoMarcas');
+            tbodyM.innerHTML = '';
+            Object.keys(marcas).sort().forEach(marca => {
+                const m = marcas[marca];
+                const tasaWS = m.enviosWS > 0 ? Math.round((m.leidosWS / m.enviosWS) * 100) : 0;
+                const tasaVE = m.enviosVE > 0 ? Math.round((m.leidosVE / m.enviosVE) * 100) : 0;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${marca}</td><td>${m.enviosWS}</td><td>${m.leidosWS}</td><td>${tasaWS}%</td><td>${m.enviosVE}</td><td>${m.leidosVE}</td><td>${tasaVE}%</td>`;
+                tbodyM.appendChild(tr);
+            });
+        }
+        
+        cargarDatos();
+    </script>
+</body>
+</html>
