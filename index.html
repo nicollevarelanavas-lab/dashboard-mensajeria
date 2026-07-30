@@ -288,52 +288,40 @@
     </div>
     
     <script>
-        const SHEET_ID = '1RC1VLZsbR0hpH8XuQUPT78A5RZDgiqyj6euXyxWROmQ';
-        const SHEET_NAME = 'DATOS';
-        const API_KEY = 'AIzaSyDpC0Y_5A8F4VJ8qQqZqJkN8uCrU5b9Qg0';
+       const DATA_URL = 'https://opensheet.elk.sh/1RC1VLZsbR0hpH8XuQUPT78A5RZDgiqyj6euXyxWROmQ/DATOS';
         
         let datos = [];
         let charts = {};
         
-        async function cargarDatos() {
-            try {
-                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_NAME}?key=${API_KEY}`;
-                console.log('URL:', url);
-                const response = await fetch(url);
-                
-                console.log('Response status:', response.status);
-                
-                if (!response.ok) {
-                    throw new Error(`Error HTTP: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                console.log('Datos recibidos:', data);
-                
-                if (!data.values || data.values.length < 2) {
-                    throw new Error('No hay datos en el Sheet o está vacío');
-                }
-                
-                const headers = data.values[0];
-                console.log('Headers:', headers);
-                
-                datos = data.values.slice(1).map(row => {
-                    const obj = {};
-                    headers.forEach((header, index) => {
-                        obj[header.trim()] = row[index] || '';
-                    });
-                    return obj;
-                });
-                
-                console.log('Datos procesados:', datos.length, 'filas');
-                llenarFiltros();
-                aplicarFiltros();
-                
-            } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('errorContainer').innerHTML = `<div class="error">Error al cargar datos: ${error.message}</div>`;
-            }
+async function cargarDatos() {
+    try {
+        console.log('Consultando:', DATA_URL);
+
+        const response = await fetch(DATA_URL);
+
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
         }
+
+        datos = await response.json();
+
+        console.log('Datos recibidos:', datos);
+        console.log('Filas encontradas:', datos.length);
+
+        if (!datos || datos.length === 0) {
+            throw new Error('No se encontraron registros en la hoja');
+        }
+
+        llenarFiltros();
+        aplicarFiltros();
+
+    } catch (error) {
+        console.error('Error:', error);
+
+        document.getElementById('errorContainer').innerHTML =
+            `<div class="error">Error al cargar datos: ${error.message}</div>`;
+    }
+}
         
         function llenarFiltros() {
             const meses = [...new Set(datos.map(d => d['Mes']))].filter(Boolean).sort();
