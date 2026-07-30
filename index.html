@@ -242,11 +242,11 @@
         <div class="chartsGrid">
             <div class="chartContainer">
                 <h3>Envíos por Zona</h3>
-                <canvas id="chartZonas"></canvas>
+                <canvas id="chartZonas" height="100"></canvas>
             </div>
             <div class="chartContainer">
                 <h3>Envíos por Marca</h3>
-                <canvas id="chartMarcas"></canvas>
+                <canvas id="chartMarcas" height="100"></canvas>
             </div>
         </div>
         
@@ -289,7 +289,7 @@
     
     <script>
         const SHEET_ID = '1RC1VLZsbR0hpH8XuQUPT78A5RZDgiqyj6euXyxWROmQ';
-        const SHEET_NAME = 'Cumplimiento%20de%20CI%202026';
+        const SHEET_NAME = 'DATOS';
         const API_KEY = 'AIzaSyDpC0Y_5A8F4VJ8qQqZqJkN8uCrU5b9Qg0';
         
         let datos = [];
@@ -298,19 +298,25 @@
         async function cargarDatos() {
             try {
                 const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_NAME}?key=${API_KEY}`;
+                console.log('URL:', url);
                 const response = await fetch(url);
                 
+                console.log('Response status:', response.status);
+                
                 if (!response.ok) {
-                    throw new Error(`Error: ${response.status}`);
+                    throw new Error(`Error HTTP: ${response.status}`);
                 }
                 
                 const data = await response.json();
+                console.log('Datos recibidos:', data);
                 
                 if (!data.values || data.values.length < 2) {
-                    throw new Error('No hay datos en el Sheet');
+                    throw new Error('No hay datos en el Sheet o está vacío');
                 }
                 
                 const headers = data.values[0];
+                console.log('Headers:', headers);
+                
                 datos = data.values.slice(1).map(row => {
                     const obj = {};
                     headers.forEach((header, index) => {
@@ -319,11 +325,13 @@
                     return obj;
                 });
                 
+                console.log('Datos procesados:', datos.length, 'filas');
                 llenarFiltros();
                 aplicarFiltros();
                 
             } catch (error) {
-                document.getElementById('errorContainer').innerHTML = `<div class="error">Error: ${error.message}</div>`;
+                console.error('Error:', error);
+                document.getElementById('errorContainer').innerHTML = `<div class="error">Error al cargar datos: ${error.message}</div>`;
             }
         }
         
@@ -333,6 +341,10 @@
             const zonas = [...new Set(datos.map(d => d['Zona']))].filter(Boolean).sort();
             const pilares = [...new Set(datos.map(d => d['Pilar']))].filter(Boolean).sort();
             const marcas = [...new Set(datos.map(d => d['Marca']))].filter(Boolean).sort();
+            
+            console.log('Meses:', meses);
+            console.log('Zonas:', zonas);
+            console.log('Marcas:', marcas);
             
             meses.forEach(m => {
                 const opt = document.createElement('option');
@@ -385,6 +397,8 @@
                        (!marca || d['Marca'] === marca);
             });
             
+            console.log('Datos filtrados:', filtered.length);
+            
             actualizarKPIs(filtered);
             actualizarGraficos(filtered);
             actualizarTablas(filtered);
@@ -435,7 +449,8 @@
                     datasets: [{
                         label: 'Envíos',
                         data: Object.keys(zonas).sort().map(z => zonas[z]),
-                        backgroundColor: '#185FA5'
+                        backgroundColor: '#185FA5',
+                        borderRadius: 4
                     }]
                 },
                 options: {
@@ -457,7 +472,8 @@
                     datasets: [{
                         label: 'Envíos',
                         data: Object.keys(marcas).sort().map(m => marcas[m]),
-                        backgroundColor: '#378ADD'
+                        backgroundColor: '#378ADD',
+                        borderRadius: 4
                     }]
                 },
                 options: {
