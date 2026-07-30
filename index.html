@@ -112,7 +112,7 @@
 
         .kpis-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 20px;
         }
 
@@ -132,7 +132,6 @@
 
         .kpi-card.general {
             border-left-color: #C54134;
-            grid-column: 1 / -1;
         }
 
         .kpi-label {
@@ -253,10 +252,6 @@
                 grid-template-columns: 1fr;
             }
 
-            .kpi-card.general {
-                grid-column: auto;
-            }
-
             .header h1 {
                 font-size: 28px;
             }
@@ -305,7 +300,7 @@
         <div id="error-container"></div>
 
         <div class="filtros-container">
-            <div class="filtros-titulo">🔍 Filtros</div>
+            <div class="filtros-titulo">🔍 FILTROS</div>
             <div class="filtros">
                 <div class="filtro-group">
                     <label class="filtro-label">Mes</label>
