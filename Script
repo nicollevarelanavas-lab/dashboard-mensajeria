@@ -1,0 +1,481 @@
+/*
+Dashboard Mensajería - script_dashboard_mensajeria.js
+
+Conexión a Google Sheets publicado como CSV.
+Reemplaza GOOGLE_SHEET_CSV_URL con la URL CSV de tu Google Sheet.
+
+Requiere Chart.js cargado en el HTML.
+*/
+
+const GOOGLE_SHEET_CSV_URL = "PEGA_AQUI_TU_URL_CSV";
+
+let dashboardData = [];
+let charts = {};
+
+
+/* ==========================
+   CARGA DE DATOS
+========================== */
+
+async function loadData() {
+
+  try {
+
+    const response = await fetch(GOOGLE_SHEET_CSV_URL);
+    const csv = await response.text();
+
+    dashboardData = parseCSV(csv);
+
+    populateFilters();
+    updateDashboard();
+
+  } catch (error) {
+
+    console.error(
+      "Error cargando datos del dashboard:",
+      error
+    );
+
+  }
+
+}
+
+
+/* ==========================
+   CONVERTIR CSV A JSON
+========================== */
+
+function parseCSV(csv) {
+
+  const rows = csv.trim().split("\n");
+
+  const headers = rows[0]
+    .split(",")
+    .map(header => header.trim());
+
+
+  return rows.slice(1).map(row => {
+
+    const values = row.split(",");
+
+    const item = {};
+
+
+    headers.forEach((header, index) => {
+
+      item[header] =
+        values[index]?.trim() || "";
+
+    });
+
+
+    return item;
+
+  });
+
+}
+
+
+/* ==========================
+   FILTROS
+========================== */
+
+
+function populateFilters() {
+
+  createFilter(
+    "zonaFilter",
+    "Zona"
+  );
+
+
+  createFilter(
+    "marcaFilter",
+    "Marca"
+  );
+
+}
+
+
+
+function createFilter(elementId, field) {
+
+  const select =
+    document.getElementById(elementId);
+
+
+  if (!select) return;
+
+
+  const values = [
+    ...new Set(
+      dashboardData
+        .map(item => item[field])
+        .filter(Boolean)
+    )
+  ];
+
+
+  select.innerHTML =
+    '<option value="Todos">Todos</option>';
+
+
+  values.forEach(value => {
+
+    select.innerHTML +=
+      `<option value="${value}">
+        ${value}
+      </option>`;
+
+  });
+
+}
+
+
+
+
+function getFilteredData() {
+
+
+  const zona =
+    document.getElementById("zonaFilter")
+    ?.value || "Todos";
+
+
+  const marca =
+    document.getElementById("marcaFilter")
+    ?.value || "Todos";
+
+
+
+  return dashboardData.filter(item => {
+
+
+    const matchZona =
+      zona === "Todos" ||
+      item.Zona === zona;
+
+
+
+    const matchMarca =
+      marca === "Todos" ||
+      item.Marca === marca;
+
+
+
+    return matchZona && matchMarca;
+
+
+  });
+
+
+}
+
+
+
+/* ==========================
+   ACTUALIZAR DASHBOARD
+========================== */
+
+
+function updateDashboard() {
+
+
+  const data =
+    getFilteredData();
+
+
+
+  updateKPIs(data);
+
+
+  updateCharts(data);
+
+
+}
+
+
+
+/* ==========================
+   KPIs
+========================== */
+
+
+function updateKPIs(data) {
+
+
+  const inversion =
+    sumField(
+      data,
+      "Inversion"
+    );
+
+
+  const impactos =
+    sumField(
+      data,
+      "Impactos"
+    );
+
+
+  const alcance =
+    sumField(
+      data,
+      "Alcance"
+    );
+
+
+
+  updateElement(
+    "kpiInversion",
+    inversion.toLocaleString()
+  );
+
+
+  updateElement(
+    "kpiImpactos",
+    impactos.toLocaleString()
+  );
+
+
+  updateElement(
+    "kpiAlcance",
+    alcance.toLocaleString()
+  );
+
+
+}
+
+
+
+function sumField(data, field) {
+
+
+  return data.reduce(
+
+    (total, item) => {
+
+      return total +
+        Number(item[field] || 0);
+
+    },
+
+    0
+
+  );
+
+}
+
+
+
+function updateElement(id, value) {
+
+
+  const element =
+    document.getElementById(id);
+
+
+
+  if (element) {
+
+    element.innerText = value;
+
+  }
+
+}
+
+
+
+/* ==========================
+   GRÁFICOS
+========================== */
+
+
+function updateCharts(data) {
+
+
+  const impactosZona =
+    groupData(
+      data,
+      "Zona",
+      "Impactos"
+    );
+
+
+  const impactosMarca =
+    groupData(
+      data,
+      "Marca",
+      "Impactos"
+    );
+
+
+
+  renderChart(
+    "zonaChart",
+    impactosZona,
+    "Impactos por zona"
+  );
+
+
+
+  renderChart(
+    "marcaChart",
+    impactosMarca,
+    "Impactos por marca"
+  );
+
+
+}
+
+
+
+
+function groupData(
+  data,
+  category,
+  metric
+) {
+
+
+  return data.reduce(
+
+    (result, item) => {
+
+
+      const key =
+        item[category] ||
+        "Sin dato";
+
+
+
+      result[key] =
+        (result[key] || 0) +
+        Number(item[metric] || 0);
+
+
+
+      return result;
+
+
+    },
+
+    {}
+
+  );
+
+
+}
+
+
+
+
+
+function renderChart(
+  id,
+  dataset,
+  title
+) {
+
+
+  const canvas =
+    document.getElementById(id);
+
+
+
+  if (!canvas) return;
+
+
+
+  if (charts[id]) {
+
+    charts[id].destroy();
+
+  }
+
+
+
+  charts[id] =
+    new Chart(
+      canvas,
+      {
+
+        type: "bar",
+
+        data: {
+
+          labels:
+            Object.keys(dataset),
+
+
+          datasets: [
+
+            {
+
+              label: title,
+
+
+              data:
+                Object.values(dataset)
+
+            }
+
+          ]
+
+        },
+
+
+        options: {
+
+          responsive: true,
+
+
+          maintainAspectRatio:
+            false
+
+        }
+
+
+      }
+
+    );
+
+
+}
+
+
+
+
+/* ==========================
+   INICIALIZACIÓN
+========================== */
+
+
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+
+
+    document
+      .getElementById("zonaFilter")
+      ?.addEventListener(
+        "change",
+        updateDashboard
+      );
+
+
+
+    document
+      .getElementById("marcaFilter")
+      ?.addEventListener(
+        "change",
+        updateDashboard
+      );
+
+
+
+    loadData();
+
+
+  }
+);
