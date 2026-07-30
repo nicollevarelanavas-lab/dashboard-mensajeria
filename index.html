@@ -1,1 +1,807 @@
-<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard Mensajeria v2</title><script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script><style>body{margin:0;font-family:Segoe UI,sans-serif;background:#f5f5f5}.layout{display:grid;grid-template-columns:260px 1fr;gap:20px;padding:20px}.sidebar,.card{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)}.sidebar{padding:15px}.sidebar h2{color:#042C53}.sidebar select{width:100%;padding:10px;margin-bottom:10px}.main{display:grid;gap:20px}.top{display:grid;grid-template-columns:2fr 1fr 1fr;gap:20px}.kpi-main{text-align:center;padding:25px}.kpi-main .v{font-size:72px;color:#C54134;font-weight:bold}.kpi{text-align:center;padding:25px}.kpi .v{font-size:40px;color:#185FA5;font-weight:bold}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}.chart{padding:15px;height:380px}.tablecard{padding:15px}.tablewrap{max-height:280px;overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px solid #ddd;font-size:12px}th{background:#E6F1FB}@media(max-width:900px){.layout,.top,.grid2{grid-template-columns:1fr}}</style></head><body><div class="layout"><div class="sidebar"><h2>Filtros</h2><select id="mes"></select><select id="semana"></select><select id="zona"></select><select id="pilar"></select><select id="marca"></select></div><div class="main"><div class="top"><div class="card kpi-main"><div>LECTURA GENERAL</div><div id="general" class="v">0%</div></div><div class="card kpi"><div>WHATSAPP</div><div id="ws" class="v">0%</div></div><div class="card kpi"><div>VIVA ENGAGE</div><div id="ve" class="v">0%</div></div></div><div class="grid2"><div class="card chart"><canvas id="zonaChart"></canvas></div><div class="card chart"><canvas id="marcaChart"></canvas></div></div><div class="grid2"><div class="card tablecard"><h3>Lectura por Zona</h3><div class="tablewrap"><table><thead><tr><th>Zona</th><th>%</th></tr></thead><tbody id="tz"></tbody></table></div></div><div class="card tablecard"><h3>Lectura por Marca</h3><div class="tablewrap"><table><thead><tr><th>Marca</th><th>%</th></tr></thead><tbody id="tm"></tbody></table></div></div></div></div></div><script>const URL='https://opensheet.elk.sh/1RC1VLZsbR0hpH8XuQUPT78A5RZDgiqyj6euXyxWROmQ/DATOS';let datos=[],zc,mc;fetch(URL).then(r=>r.json()).then(d=>{datos=d;render()});function pct(a,b){return b?Math.round(a/b*100):0}function render(){let ews=0,lws=0,eve=0,lve=0;datos.forEach(r=>{ews+=+r.Envios_WS||0;lws+=+r.Leidos_WS||0;eve+=+r.Envios_VivaEngage||0;lve+=+r.Leidos_VivaEngage||0});document.getElementById('ws').innerText=pct(lws,ews)+'%';document.getElementById('ve').innerText=pct(lve,eve)+'%';document.getElementById('general').innerText=pct(lws+lve,ews+eve)+'%';let z={},m={};datos.forEach(r=>{let p=pct((+r.Leidos_WS||0)+(+r.Leidos_VivaEngage||0),(+r.Envios_WS||0)+(+r.Envios_VivaEngage||0));z[r.Zona]=(z[r.Zona]||[]).concat([p]);m[r.Marca]=(m[r.Marca]||[]).concat([p]);});let za=Object.entries(z).map(([k,v])=>[k,Math.round(v.reduce((a,b)=>a+b,0)/v.length)]).sort((a,b)=>b[1]-a[1]);let ma=Object.entries(m).map(([k,v])=>[k,Math.round(v.reduce((a,b)=>a+b,0)/v.length)]).sort((a,b)=>b[1]-a[1]);if(zc)zc.destroy();zc=new Chart(zonaChart,{type:'bar',data:{labels:za.map(x=>x[0]),datasets:[{data:za.map(x=>x[1]),backgroundColor:'#185FA5'}]},options:{indexAxis:'y',plugins:{legend:{display:false}},responsive:true,maintainAspectRatio:false}});if(mc)mc.destroy();mc=new Chart(marcaChart,{type:'bar',data:{labels:ma.map(x=>x[0]),datasets:[{data:ma.map(x=>x[1]),backgroundColor:'#042C53'}]},options:{indexAxis:'y',plugins:{legend:{display:false}},responsive:true,maintainAspectRatio:false}});tz.innerHTML=za.map(x=>`<tr><td>${x[0]}</td><td>${x[1]}%</td></tr>`).join('');tm.innerHTML=ma.map(x=>`<tr><td>${x[0]}</td><td>${x[1]}%</td></tr>`).join('');}</script></body></html>
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Dashboard Mensajería</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<div class="app">
+
+<!-------------------------
+SIDEBAR
+-------------------------->
+
+<aside class="sidebar">
+
+<div class="logo">
+
+<div class="logo-icon">
+
+<i class="fa-solid fa-paper-plane"></i>
+
+</div>
+
+<div>
+
+<h2>Dashboard</h2>
+
+<span>Mensajería Corporativa</span>
+
+</div>
+
+</div>
+
+<div class="menu-title">
+
+FILTROS
+
+</div>
+
+<div class="filter-group">
+
+<label>Año</label>
+
+<select id="filtroAnio"></select>
+
+</div>
+
+<div class="filter-group">
+
+<label>Mes</label>
+
+<select id="filtroMes"></select>
+
+</div>
+
+<div class="filter-group">
+
+<label>Semana</label>
+
+<select id="filtroSemana"></select>
+
+</div>
+
+<div class="filter-group">
+
+<label>Zona</label>
+
+<select id="filtroZona"></select>
+
+</div>
+
+<div class="filter-group">
+
+<label>Pilar</label>
+
+<select id="filtroPilar"></select>
+
+</div>
+
+<div class="filter-group">
+
+<label>Marca</label>
+
+<select id="filtroMarca"></select>
+
+</div>
+
+<div class="sidebar-footer">
+
+<div>
+
+Última actualización
+
+</div>
+
+<strong id="fechaActualizacion">
+
+--
+
+</strong>
+
+</div>
+
+</aside>
+
+<!-------------------------
+CONTENIDO
+-------------------------->
+
+<main class="content">
+
+<header class="topbar">
+
+<div>
+
+<h1>
+
+Dashboard de Mensajería
+
+</h1>
+
+<p>
+
+Seguimiento de lectura de comunicaciones internas
+
+</p>
+
+</div>
+
+<div class="header-right">
+
+<div class="period-card">
+
+<i class="fa-solid fa-calendar-days"></i>
+
+<div>
+
+<small>
+
+Periodo
+
+</small>
+
+<strong id="periodoActual">
+
+Todos
+
+</strong>
+
+</div>
+
+</div>
+
+</div>
+
+</header>
+
+<!-------------------------
+FILA SUPERIOR
+-------------------------->
+
+<section class="hero-grid">
+
+<div class="hero-card">
+
+<div class="hero-header">
+
+<div>
+
+<h3>
+
+Lectura General
+
+</h3>
+
+<p>
+
+Porcentaje general de lectura
+
+</p>
+
+</div>
+
+</div>
+
+<div class="gauge-container">
+
+<canvas id="gaugeChart"></canvas>
+
+<div class="gauge-center">
+
+<span id="kpiGeneral">
+
+0%
+
+</span>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="kpi-grid">
+
+<div class="kpi-card whatsapp">
+
+<div class="kpi-icon">
+
+<i class="fa-brands fa-whatsapp"></i>
+
+</div>
+
+<div class="kpi-info">
+
+<span>
+
+WhatsApp
+
+</span>
+
+<h2 id="kpiWhatsapp">
+
+0%
+
+</h2>
+
+<small>
+
+Lectura
+
+</small>
+
+</div>
+
+</div>
+
+<div class="kpi-card correo">
+
+<div class="kpi-icon">
+
+<i class="fa-solid fa-envelope"></i>
+
+</div>
+
+<div class="kpi-info">
+
+<span>
+
+Viva Engage
+
+</span>
+
+<h2 id="kpiCorreo">
+
+0%
+
+</h2>
+
+<small>
+
+Lectura
+
+</small>
+
+</div>
+
+</div>
+
+<div class="kpi-card total">
+
+<div class="kpi-icon">
+
+<i class="fa-solid fa-paper-plane"></i>
+
+</div>
+
+<div class="kpi-info">
+
+<span>
+
+Mensajes Enviados
+
+</span>
+
+<h2 id="totalEnvios">
+
+0
+
+</h2>
+
+<small>
+
+Total
+
+</small>
+
+</div>
+
+</div>
+
+<div class="kpi-card lectura">
+
+<div class="kpi-icon">
+
+<i class="fa-solid fa-eye"></i>
+
+</div>
+
+<div class="kpi-info">
+
+<span>
+
+Mensajes Leídos
+
+</span>
+
+<h2 id="totalLeidos">
+
+0
+
+</h2>
+
+<small>
+
+Total
+
+</small>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+<!-- ====================================================== -->
+<!-- PANEL PRINCIPAL DE ANALÍTICA -->
+<!-- ====================================================== -->
+
+<section class="dashboard-grid">
+
+    <!-- ===================== -->
+    <!-- Lectura por Zona -->
+    <!-- ===================== -->
+
+    <div class="panel">
+
+        <div class="panel-header">
+
+            <div>
+
+                <h3>
+
+                    Lectura por Zona
+
+                </h3>
+
+                <span>
+
+                    Comparativo de porcentaje de lectura
+
+                </span>
+
+            </div>
+
+            <i class="fa-solid fa-chart-bar"></i>
+
+        </div>
+
+        <div class="chart-container">
+
+            <canvas id="zoneChart"></canvas>
+
+        </div>
+
+    </div>
+
+    <!-- ===================== -->
+    <!-- Lectura por Marca -->
+    <!-- ===================== -->
+
+    <div class="panel">
+
+        <div class="panel-header">
+
+            <div>
+
+                <h3>
+
+                    Lectura por Marca
+
+                </h3>
+
+                <span>
+
+                    Comparativo por marca
+
+                </span>
+
+            </div>
+
+            <i class="fa-solid fa-chart-column"></i>
+
+        </div>
+
+        <div class="chart-container">
+
+            <canvas id="brandChart"></canvas>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- ====================================================== -->
+<!-- SEGUNDA FILA -->
+<!-- ====================================================== -->
+
+<section class="dashboard-grid">
+
+    <!-- Ranking Zonas -->
+
+    <div class="panel">
+
+        <div class="panel-header">
+
+            <div>
+
+                <h3>
+
+                    Top Zonas
+
+                </h3>
+
+                <span>
+
+                    Mejor porcentaje de lectura
+
+                </span>
+
+            </div>
+
+            <i class="fa-solid fa-ranking-star"></i>
+
+        </div>
+
+        <div id="rankingZona" class="ranking-list">
+
+        </div>
+
+    </div>
+
+    <!-- Ranking Marcas -->
+
+    <div class="panel">
+
+        <div class="panel-header">
+
+            <div>
+
+                <h3>
+
+                    Top Marcas
+
+                </h3>
+
+                <span>
+
+                    Mejor desempeño
+
+                </span>
+
+            </div>
+
+            <i class="fa-solid fa-medal"></i>
+
+        </div>
+
+        <div id="rankingMarca" class="ranking-list">
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- ====================================================== -->
+<!-- TABLA EJECUTIVA -->
+<!-- ====================================================== -->
+
+<section class="panel table-panel">
+
+    <div class="panel-header">
+
+        <div>
+
+            <h3>
+
+                Resumen Ejecutivo
+
+            </h3>
+
+            <span>
+
+                Resultado consolidado de comunicaciones
+
+            </span>
+
+        </div>
+
+        <i class="fa-solid fa-table"></i>
+
+    </div>
+
+    <div class="table-responsive">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>Zona</th>
+
+                    <th>Marca</th>
+
+                    <th>Enviados</th>
+
+                    <th>Leídos</th>
+
+                    <th>% Lectura</th>
+
+                    <th>Estado</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="tablaResumen">
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+<!-- ====================================================== -->
+<!-- TARJETAS INFERIORES -->
+<!-- ====================================================== -->
+
+<section class="bottom-grid">
+
+    <!-- KPI -->
+
+    <div class="mini-card">
+
+        <div>
+
+            <span>
+
+                Zona con mejor desempeño
+
+            </span>
+
+            <h2 id="bestZona">
+
+                --
+
+            </h2>
+
+        </div>
+
+        <i class="fa-solid fa-trophy"></i>
+
+    </div>
+
+    <div class="mini-card">
+
+        <div>
+
+            <span>
+
+                Marca con mejor desempeño
+
+            </span>
+
+            <h2 id="bestMarca">
+
+                --
+
+            </h2>
+
+        </div>
+
+        <i class="fa-solid fa-award"></i>
+
+    </div>
+
+    <div class="mini-card">
+
+        <div>
+
+            <span>
+
+                Promedio General
+
+            </span>
+
+            <h2 id="promedioGeneral">
+
+                0%
+
+            </h2>
+
+        </div>
+
+        <i class="fa-solid fa-chart-line"></i>
+
+    </div>
+
+    <div class="mini-card">
+
+        <div>
+
+            <span>
+
+                Comunicaciones Analizadas
+
+            </span>
+
+            <h2 id="totalComunicaciones">
+
+                0
+
+            </h2>
+
+        </div>
+
+        <i class="fa-solid fa-envelope-open-text"></i>
+
+    </div>
+
+</section>
+<!-- ===================================================== -->
+<!-- FOOTER -->
+<!-- ===================================================== -->
+
+<footer class="dashboard-footer">
+
+    <div class="footer-left">
+
+        <i class="fa-solid fa-chart-pie"></i>
+
+        <span>
+
+            Dashboard de Mensajería · Business Intelligence
+
+        </span>
+
+    </div>
+
+    <div class="footer-right">
+
+        <span>
+
+            Desarrollado para seguimiento de comunicaciones internas
+
+        </span>
+
+    </div>
+
+</footer>
+
+</main>
+
+<!-- ===================================================== -->
+<!-- LOADER -->
+<!-- ===================================================== -->
+
+<div id="loader" class="loader">
+
+    <div class="loader-content">
+
+        <div class="spinner"></div>
+
+        <h3>
+
+            Cargando información...
+
+        </h3>
+
+        <p>
+
+            Obteniendo datos desde Google Sheets
+
+        </p>
+
+    </div>
+
+</div>
+
+<!-- ===================================================== -->
+<!-- MODAL DETALLE -->
+<!-- ===================================================== -->
+
+<div id="detailModal" class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2>
+
+                Detalle de Información
+
+            </h2>
+
+            <button id="closeModal">
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+        <div class="modal-body" id="modalBody">
+
+            Información...
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ===================================================== -->
+<!-- BOTÓN FLOTANTE -->
+<!-- ===================================================== -->
+
+<div class="floating-menu">
+
+    <button id="refreshDashboard" title="Actualizar">
+
+        <i class="fa-solid fa-rotate"></i>
+
+    </button>
+
+    <button id="downloadPNG" title="Exportar">
+
+        <i class="fa-solid fa-download"></i>
+
+    </button>
+
+</div>
+
+<!-- ===================================================== -->
+<!-- TOAST -->
+<!-- ===================================================== -->
+
+<div id="toast" class="toast">
+
+    <i class="fa-solid fa-circle-check"></i>
+
+    <span id="toastMessage">
+
+        Dashboard actualizado correctamente
+
+    </span>
+
+</div>
+
+<!-- ===================================================== -->
+<!-- SCRIPTS -->
+<!-- ===================================================== -->
+
+<script src="script.js"></script>
+
+</div>
+
+</body>
+
+</html>
