@@ -615,11 +615,11 @@ gradient1.addColorStop(1, '#7B8C9D');
                         data: za.map(x => x[1]),
                         backgroundColor: gradient1,
                         borderColor: '#425466',
-                        borderWidth: 1.5,
-                        borderRadius: 6,
+                        borderWidth: 1.2,
+                        borderRadius: 10,
                         borderSkipped: false,
-                        barThickness: 14,
-                        maxBarThickness: 16
+                        barThickness: 18,
+                        maxBarThickness: 20
                     }]
                 },
                 options: {
@@ -657,7 +657,7 @@ gradient1.addColorStop(1, '#7B8C9D');
                         chart.data.datasets.forEach((dataset, i) => {
                             chart.getDatasetMeta(i).data.forEach((datapoint, index) => {
                                 const {x, y} = datapoint.tooltipPosition();
-                                ctx.fillText(dataset.data[index] + '%', x + 20, y + 4);
+                                ctx.fillText(dataset.data[index] + '%', x + 40, y + 4);
                             });
                         });
                     }
