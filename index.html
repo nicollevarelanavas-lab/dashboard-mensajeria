@@ -524,10 +524,15 @@
                     select.appendChild(el);
                 });
             });
+        const mesGuardado = localStorage.getItem('mesSeleccionado');
+
+if (mesGuardado) {
+    document.getElementById('mes').value = mesGuardado;
         }
 
         function aplicarFiltros() {
             const mes = document.getElementById('mes').value;
+            localStorage.setItem('mesSeleccionado', mes);
             const semana = document.getElementById('semana').value;
             const zona = document.getElementById('zona').value;
             const pilar = document.getElementById('pilar').value;
