@@ -714,9 +714,20 @@
 
             document.getElementById('tz').innerHTML = za.map(x => `<tr><td>${x[0]}</td><td><strong>${x[1]}%</strong></td></tr>`).join('');
             
-            // Tabla de marca con columnas de Planificado y Ejecutado
+            // Agrupar datos de planificación y ejecución por marca
+            let planEjec = {};
+            datos.forEach(r => {
+                if (!planEjec[r.Marca]) {
+                    planEjec[r.Marca] = { planificado: 0, ejecutado: 0 };
+                }
+                planEjec[r.Marca].planificado += parseInt(r.Planificado_Marca) || 0;
+                planEjec[r.Marca].ejecutado += parseInt(r.Ejecutado_Marca) || 0;
+            });
+
             document.getElementById('tm').innerHTML = ma.map(x => {
-                return `<tr><td>${x[0]}</td><td><strong>${x[1]}%</strong></td><td>0</td><td>0</td></tr>`;
+                const plan = planEjec[x[0]]?.planificado || 0;
+                const exec = planEjec[x[0]]?.ejecutado || 0;
+                return `<tr><td>${x[0]}</td><td><strong>${x[1]}%</strong></td><td>${plan}</td><td>${exec}</td></tr>`;
             }).join('');
         }
     </script>
