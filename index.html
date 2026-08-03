@@ -666,8 +666,8 @@ document.getElementById('ejecucionPlan').innerText =
 
             const ctx2 = document.getElementById('marcaChart').getContext('2d');
 const gradient2 = ctx2.createLinearGradient(0, 0, 0, 400);
-gradient2.addColorStop(0, '#355C7D');
-gradient2.addColorStop(1, '#6C8CAE');
+gradient2.addColorStop(0, '#425466');
+gradient2.addColorStop(1, '#7B8C9D');
 
             if (mc) mc.destroy();
             mc = new Chart(marcaChart, {
@@ -678,12 +678,12 @@ gradient2.addColorStop(1, '#6C8CAE');
                         label: '% Lectura',
                         data: ma.map(x => x[1]),
                         backgroundColor: gradient2,
-                        borderColor: '#355C7D',
+                        borderColor: '#425466',
                         borderWidth: 1.5,
                         borderRadius: 6,
                         borderSkipped: false,
-                        barThickness: 14,
-                        maxBarThickness: 16
+                        barThickness: 16,
+                        maxBarThickness: 18
                     }]
                 },
                 options: {
@@ -721,7 +721,7 @@ gradient2.addColorStop(1, '#6C8CAE');
                         chart.data.datasets.forEach((dataset, i) => {
                             chart.getDatasetMeta(i).data.forEach((datapoint, index) => {
                                 const {x, y} = datapoint.tooltipPosition();
-                                ctx.fillText(dataset.data[index] + '%', x - 8, y + 4);
+                                ctx.fillText(dataset.data[index] + '%', x + 25, y + 4);
                             });
                         });
                     }
