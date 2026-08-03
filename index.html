@@ -601,9 +601,9 @@ document.getElementById('ejecucionPlan').innerText =
             let ma = Object.entries(m).map(([k, v]) => [k, Math.round(v.reduce((a, b) => a + b, 0) / v.length)]).sort((a, b) => b[1] - a[1]);
 
             const ctx1 = document.getElementById('zonaChart').getContext('2d');
-            const gradient1 = ctx1.createLinearGradient(0, 0, 0, 400);
-            gradient1.addColorStop(0, 'rgba(44, 62, 80, 0.8)');
-            gradient1.addColorStop(1, 'rgba(52, 73, 94, 0.3)');
+const gradient1 = ctx1.createLinearGradient(0, 0, 0, 400);
+gradient1.addColorStop(0, '#425466');
+gradient1.addColorStop(1, '#7B8C9D');
 
             if (zc) zc.destroy();
             zc = new Chart(zonaChart, {
@@ -614,12 +614,12 @@ document.getElementById('ejecucionPlan').innerText =
                         label: '% Lectura',
                         data: za.map(x => x[1]),
                         backgroundColor: gradient1,
-                        borderColor: '#2c3e50',
-                        borderWidth: 2,
-                        borderRadius: 12,
+                        borderColor: '#425466',
+                        borderWidth: 1.5,
+                        borderRadius: 6,
                         borderSkipped: false,
-                        barThickness: 25,
-                        maxBarThickness: 30
+                        barThickness: 14,
+                        maxBarThickness: 16
                     }]
                 },
                 options: {
@@ -657,7 +657,7 @@ document.getElementById('ejecucionPlan').innerText =
                         chart.data.datasets.forEach((dataset, i) => {
                             chart.getDatasetMeta(i).data.forEach((datapoint, index) => {
                                 const {x, y} = datapoint.tooltipPosition();
-                                ctx.fillText(dataset.data[index] + '%', x - 8, y + 4);
+                                ctx.fillText(dataset.data[index] + '%', x + 20, y + 4);
                             });
                         });
                     }
