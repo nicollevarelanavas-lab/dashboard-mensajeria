@@ -571,13 +571,13 @@
             document.getElementById('general').innerText = pct(lws + lve, ews + eve) + '%';
             
             // % Cumplimiento del plan
-            const totalPlanificado = datos.reduce(
-    (sum, r) => sum + (parseInt(r.Planificado_marca) || 0),
+  const totalPlanificado = datos.reduce(
+    (sum, r) => sum + (parseInt(r.Planificado_Marca) || 0),
     0
 );
 
 const totalEjecutado = datos.reduce(
-    (sum, r) => sum + (parseInt(r.Ejecutado_marca) || 0),
+    (sum, r) => sum + (parseInt(r.Ejecutado_Marca) || 0),
     0
 );
 
