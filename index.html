@@ -571,8 +571,23 @@
             document.getElementById('general').innerText = pct(lws + lve, ews + eve) + '%';
             
             // % Cumplimiento del plan
-            const totalEnvios = ews + eve;
-            document.getElementById('ejecucionPlan').innerText = (totalEnvios > 0 ? '100' : '0') + '%';
+            const totalPlanificado = datos.reduce(
+    (sum, r) => sum + (parseInt(r.Planificado_marca) || 0),
+    0
+);
+
+const totalEjecutado = datos.reduce(
+    (sum, r) => sum + (parseInt(r.Ejecutado_marca) || 0),
+    0
+);
+
+const cumplimientoPlan =
+    totalPlanificado > 0
+        ? Math.round((totalEjecutado / totalPlanificado) * 100)
+        : 0;
+
+document.getElementById('ejecucionPlan').innerText =
+    cumplimientoPlan + '%';
 
             let z = {}, m = {};
             datos.forEach(r => {
