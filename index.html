@@ -501,53 +501,77 @@
             });
 
         function llenarFiltros() {
-            const meses = [...new Set(datosCompletos.map(r => r.Mes))].filter(Boolean).sort();
-            const semanas = [...new Set(datosCompletos.map(r => r.Semana))].filter(Boolean).sort((a, b) => a - b);
-            const zonas = [...new Set(datosCompletos.map(r => r.Zona))].filter(Boolean).sort();
-            const pilares = [...new Set(datosCompletos.map(r => r.Pilar))].filter(Boolean).sort();
-            const marcas = [...new Set(datosCompletos.map(r => r.Marca))].filter(Boolean).sort();
+    const meses = [...new Set(datosCompletos.map(r => r.Mes))]
+        .filter(Boolean)
+        .sort();
 
-            const selects = {
-                'mes': meses,
-                'semana': semanas.map(s => ({ val: s, label: `Semana ${s}` })),
-                'zona': zonas,
-                'pilar': pilares,
-                'marca': marcas
-            };
+    const semanas = [...new Set(datosCompletos.map(r => r.Semana))]
+        .filter(Boolean)
+        .sort((a, b) => a - b);
 
-            Object.entries(selects).forEach(([id, opciones]) => {
-                const select = document.getElementById(id);
-                opciones.forEach(opt => {
-                    const el = document.createElement('option');
-                    el.value = typeof opt === 'object' ? opt.val : opt;
-                    el.textContent = typeof opt === 'object' ? opt.label : opt;
-                    select.appendChild(el);
-                });
-            });
-        const mesGuardado = localStorage.getItem('mesSeleccionado');
+    const zonas = [...new Set(datosCompletos.map(r => r.Zona))]
+        .filter(Boolean)
+        .sort();
 
-if (mesGuardado) {
-    document.getElementById('mes').value = mesGuardado;
-        }
+    const pilares = [...new Set(datosCompletos.map(r => r.Pilar))]
+        .filter(Boolean)
+        .sort();
 
-        function aplicarFiltros() {
-            const mes = document.getElementById('mes').value;
-            localStorage.setItem('mesSeleccionado', mes);
-            const semana = document.getElementById('semana').value;
-            const zona = document.getElementById('zona').value;
-            const pilar = document.getElementById('pilar').value;
-            const marca = document.getElementById('marca').value;
+    const marcas = [...new Set(datosCompletos.map(r => r.Marca))]
+        .filter(Boolean)
+        .sort();
 
-            const datos = datosCompletos.filter(r =>
-                (!mes || r.Mes === mes) &&
-                (!semana || r.Semana === semana) &&
-                (!zona || r.Zona === zona) &&
-                (!pilar || r.Pilar === pilar) &&
-                (!marca || r.Marca === marca)
-            );
+    const selects = {
+        'mes': meses,
+        'semana': semanas.map(s => ({
+            val: s,
+            label: `Semana ${s}`
+        })),
+        'zona': zonas,
+        'pilar': pilares,
+        'marca': marcas
+    };
 
-            renderizar(datos);
-        }
+    Object.entries(selects).forEach(([id, opciones]) => {
+        const select = document.getElementById(id);
+
+        opciones.forEach(opt => {
+            const el = document.createElement('option');
+            el.value = typeof opt === 'object' ? opt.val : opt;
+            el.textContent = typeof opt === 'object' ? opt.label : opt;
+            select.appendChild(el);
+        });
+    });
+
+    // Recuperar último mes utilizado
+    const mesGuardado = localStorage.getItem('mesSeleccionado');
+
+    if (mesGuardado) {
+        document.getElementById('mes').value = mesGuardado;
+    }
+}
+
+function aplicarFiltros() {
+
+    const mes = document.getElementById('mes').value;
+    const semana = document.getElementById('semana').value;
+    const zona = document.getElementById('zona').value;
+    const pilar = document.getElementById('pilar').value;
+    const marca = document.getElementById('marca').value;
+
+    // Guardar último mes seleccionado
+    localStorage.setItem('mesSeleccionado', mes);
+
+    const datos = datosCompletos.filter(r =>
+        (!mes || r.Mes === mes) &&
+        (!semana || r.Semana === semana) &&
+        (!zona || r.Zona === zona) &&
+        (!pilar || r.Pilar === pilar) &&
+        (!marca || r.Marca === marca)
+    );
+
+    renderizar(datos);
+}
 
         function pct(a, b) {
             return b ? Math.round(a / b * 100) : 0;
