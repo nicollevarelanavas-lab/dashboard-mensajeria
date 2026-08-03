@@ -666,8 +666,8 @@ document.getElementById('ejecucionPlan').innerText =
 
             const ctx2 = document.getElementById('marcaChart').getContext('2d');
 const gradient2 = ctx2.createLinearGradient(0, 0, 0, 400);
-gradient2.addColorStop(0, '#2563EB');
-gradient2.addColorStop(1, '#60A5FA');
+gradient2.addColorStop(0, '#355C7D');
+gradient2.addColorStop(1, '#6C8CAE');
 
             if (mc) mc.destroy();
             mc = new Chart(marcaChart, {
@@ -678,7 +678,7 @@ gradient2.addColorStop(1, '#60A5FA');
                         label: '% Lectura',
                         data: ma.map(x => x[1]),
                         backgroundColor: gradient2,
-                        borderColor: '#1D4ED8',
+                        borderColor: '#355C7D',
                         borderWidth: 1.5,
                         borderRadius: 6,
                         borderSkipped: false,
