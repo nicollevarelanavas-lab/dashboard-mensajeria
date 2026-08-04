@@ -477,75 +477,71 @@
         const marcasData = agrupar(datos, 'Marca');
         const pilaresData = agrupar(datos, 'Pilar');
 
-        // GRÁFICO 1: Mensajes por Zona — barras horizontales agrupadas
-        if (zc) zc.destroy();
-        zc = new Chart(document.getElementById('zonaChart').getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: zonasData.map(x => x[0]),
-datasets: [
-    {
-        label: 'Planificado',
-        data: zonasData.map(x => x[1].plan),
-        backgroundColor: '#7f8c8d',
-        borderRadius: 0,
-        barThickness: 24,
-        categoryPercentage: 0.9,
-        barPercentage: 1
-    },
-    {
-        label: 'Ejecutado',
-        data: zonasData.map(x => x[1].exec),
-        backgroundColor: '#c0392b',
-        borderRadius: 0,
-        barThickness: 16,
-        categoryPercentage: 0.9,
-        barPercentage: 1
-    }
-]
+// GRÁFICO 1: Mensajes por Zona
+if (zc) zc.destroy();
+
+zc = new Chart(document.getElementById('zonaChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+        labels: zonasData.map(x => x[0]),
+        datasets: [
+            {
+                label: 'Ejecutado',
+                data: zonasData.map(x => x[1].exec),
+                backgroundColor: '#c0392b',
+                borderRadius: 0,
+                borderSkipped: false,
+                barThickness: 18
             },
-options: {
-    indexAxis: 'y',
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: {
-        duration: 800,
-        easing: 'easeInOutQuart'
+            {
+                label: 'Planificado',
+                data: zonasData.map(x => x[1].plan),
+                backgroundColor: '#95a5a6',
+                borderRadius: 0,
+                borderSkipped: false,
+                barThickness: 18
+            }
+        ]
     },
-    plugins: {
-        legend: {
-            display: false
-        }
-    },
-    scales: {
-        x: {
-            display: false,
-            grid: {
-                display: false
-            },
-            border: {
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
                 display: false
             }
         },
-        y: {
-            grid: {
-                display: false
+        scales: {
+            x: {
+                stacked: true,
+                display: false,
+                grid: {
+                    display: false
+                },
+                border: {
+                    display: false
+                }
             },
-            border: {
-                display: false
-            },
-            ticks: {
-                color: '#202124',
-                font: {
-                    size: 12,
-                    weight: 'bold'
+            y: {
+                stacked: true,
+                grid: {
+                    display: false
+                },
+                border: {
+                    display: false
+                },
+                ticks: {
+                    color: '#202124',
+                    font: {
+                        size: 12,
+                        weight: 'bold'
+                    }
                 }
             }
         }
     }
-}
-},
-        });
+});
 
         // GRÁFICO 2: Mensajes por Marca — barras verticales agrupadas
         if (mc) mc.destroy();
