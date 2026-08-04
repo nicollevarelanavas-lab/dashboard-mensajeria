@@ -139,7 +139,7 @@
 
         .legend {
             display: flex;
-            gap: 16px;
+            gap: 14px;
             font-size: 11px;
             color: #5f6368;
             font-weight: 600;
@@ -150,11 +150,12 @@
         .dot-ejecutado { background: #c0392b; }
         .dot-planificado { background: #95a5a6; }
 
-        .chart-wrapper { position: relative; height: 280px; }
+        .chart-wrapper { position: relative; height: 320px; }
+        .chart-wrapper.tall { height: 380px; }
 
         .tables-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 20px;
         }
 
@@ -198,15 +199,20 @@
             font-size: 13px;
         }
 
+        @media (max-width: 1200px) {
+            .tables-grid { grid-template-columns: 1fr 1fr; }
+        }
+
         @media (max-width: 1024px) {
-            .charts-grid, .tables-grid { grid-template-columns: 1fr; }
+            .charts-grid { grid-template-columns: 1fr; }
             .kpis-row { grid-template-columns: 1fr 1fr; }
         }
 
         @media (max-width: 768px) {
             .filtros { grid-template-columns: 1fr; }
             .kpis-row { grid-template-columns: 1fr; }
-            .chart-wrapper { height: 220px; }
+            .tables-grid { grid-template-columns: 1fr; }
+            .chart-wrapper { height: 260px; }
         }
     </style>
 </head>
@@ -285,7 +291,7 @@
                         <div class="legend-item"><div class="legend-dot dot-planificado"></div> Planificado</div>
                     </div>
                 </div>
-                <div class="chart-wrapper"><canvas id="zonaChart"></canvas></div>
+                <div class="chart-wrapper tall"><canvas id="zonaChart"></canvas></div>
             </div>
             <div class="chart-card">
                 <div class="chart-header">
@@ -295,7 +301,7 @@
                         <div class="legend-item"><div class="legend-dot dot-planificado"></div> Planificado</div>
                     </div>
                 </div>
-                <div class="chart-wrapper"><canvas id="marcaChart"></canvas></div>
+                <div class="chart-wrapper tall"><canvas id="marcaChart"></canvas></div>
             </div>
         </div>
 
@@ -307,8 +313,8 @@
                         <thead>
                             <tr>
                                 <th>Zona</th>
-                                <th>% Lectura WS</th>
-                                <th>% Lectura Viva</th>
+                                <th>% WS</th>
+                                <th>% Viva</th>
                             </tr>
                         </thead>
                         <tbody id="tz"></tbody>
@@ -316,18 +322,32 @@
                 </div>
             </div>
             <div class="table-card">
-                <div class="table-title">🏷️ Detalle por Marca</div>
+                <div class="table-title">🏷️ Lectura por Marca</div>
                 <div class="table-wrapper">
                     <table>
                         <thead>
                             <tr>
                                 <th>Marca</th>
-                                <th>% Lectura</th>
-                                <th>Planificado</th>
-                                <th>Ejecutado</th>
+                                <th>% WS</th>
+                                <th>% Viva</th>
                             </tr>
                         </thead>
                         <tbody id="tm"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="table-card">
+                <div class="table-title">🎯 Lectura por Pilar</div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Pilar</th>
+                                <th>% WS</th>
+                                <th>% Viva</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tp"></tbody>
                     </table>
                 </div>
             </div>
@@ -355,21 +375,16 @@
         });
 
     function getCampo(filtro) {
-        const mapa = { mes: 'Mes', semana: 'Semana', zona: 'Zona', pilar: 'Pilar', marca: 'Marca' };
-        return mapa[filtro];
+        return { mes: 'Mes', semana: 'Semana', zona: 'Zona', pilar: 'Pilar', marca: 'Marca' }[filtro];
     }
 
     function getValoresFiltrados(filtroId) {
-        // Obtener valores actuales de filtros anteriores a este
         const idx = ORDEN_FILTROS.indexOf(filtroId);
-        const filtrosAnteriores = ORDEN_FILTROS.slice(0, idx);
-
         let datosFiltrados = datosCompletos;
-        filtrosAnteriores.forEach(f => {
+        ORDEN_FILTROS.slice(0, idx).forEach(f => {
             const val = document.getElementById(f).value;
             if (val) datosFiltrados = datosFiltrados.filter(r => r[getCampo(f)] === val);
         });
-
         return [...new Set(datosFiltrados.map(r => r[getCampo(filtroId)]))].filter(Boolean).sort();
     }
 
@@ -381,44 +396,35 @@
         const select = document.getElementById(filtroId);
         const valorActual = select.value;
         const opciones = getValoresFiltrados(filtroId);
-
-        // Limpiar opciones excepto "Todos"
         while (select.options.length > 1) select.remove(1);
-
         opciones.forEach(opt => {
             const el = document.createElement('option');
             el.value = opt;
             el.textContent = filtroId === 'semana' ? `Semana ${opt}` : opt;
             select.appendChild(el);
         });
-
-        // Restaurar valor si sigue disponible
-        if (opciones.includes(valorActual)) select.value = valorActual;
-        else select.value = '';
+        select.value = opciones.includes(valorActual) ? valorActual : '';
     }
 
     function onFiltroChange(filtroId) {
         const idx = ORDEN_FILTROS.indexOf(filtroId);
-        // Actualizar todos los filtros siguientes en cascada
-        ORDEN_FILTROS.slice(idx + 1).forEach(f => {
-            actualizarOpcionesFiltro(f);
-        });
+        ORDEN_FILTROS.slice(idx + 1).forEach(f => actualizarOpcionesFiltro(f));
         aplicarFiltros();
     }
 
     function aplicarFiltros() {
-        const mes = document.getElementById('mes').value;
+        const mes   = document.getElementById('mes').value;
         const semana = document.getElementById('semana').value;
-        const zona = document.getElementById('zona').value;
+        const zona  = document.getElementById('zona').value;
         const pilar = document.getElementById('pilar').value;
         const marca = document.getElementById('marca').value;
 
         const datos = datosCompletos.filter(r =>
-            (!mes || r.Mes === mes) &&
+            (!mes    || r.Mes    === mes)    &&
             (!semana || r.Semana === semana) &&
-            (!zona || r.Zona === zona) &&
-            (!pilar || r.Pilar === pilar) &&
-            (!marca || r.Marca === marca)
+            (!zona   || r.Zona   === zona)   &&
+            (!pilar  || r.Pilar  === pilar)  &&
+            (!marca  || r.Marca  === marca)
         );
 
         renderizar(datos);
@@ -426,13 +432,25 @@
 
     function pct(a, b) { return b ? Math.round(a / b * 100) : 0; }
 
+    function agrupar(datos, campo) {
+        const grupos = {};
+        datos.forEach(r => {
+            const key = r[campo] || 'Sin datos';
+            if (!grupos[key]) grupos[key] = { plan: 0, exec: 0, ews: 0, lws: 0, eve: 0, lve: 0 };
+            grupos[key].plan += parseInt(r.Planificado_Marca) || 0;
+            grupos[key].exec += parseInt(r.Ejecutado_Marca)  || 0;
+            grupos[key].ews  += +r.Envios_WS         || 0;
+            grupos[key].lws  += +r.Leidos_WS         || 0;
+            grupos[key].eve  += +r.Envios_VivaEngage  || 0;
+            grupos[key].lve  += +r.Leidos_VivaEngage  || 0;
+        });
+        return Object.entries(grupos).sort((a, b) => b[1].exec - a[1].exec);
+    }
+
     function renderizar(datos) {
         if (datos.length === 0) {
-            ['general', 'ws', 've', 'ejecucionPlan'].forEach(id => {
-                document.getElementById(id).innerText = '0%';
-            });
-            document.getElementById('tz').innerHTML = '';
-            document.getElementById('tm').innerHTML = '';
+            ['general','ws','ve','ejecucionPlan'].forEach(id => document.getElementById(id).innerText = '0%');
+            ['tz','tm','tp'].forEach(id => document.getElementById(id).innerHTML = '');
             if (zc) zc.destroy();
             if (mc) mc.destroy();
             return;
@@ -447,64 +465,40 @@
             lve += +r.Leidos_VivaEngage || 0;
         });
 
-        document.getElementById('ws').innerText = pct(lws, ews) + '%';
-        document.getElementById('ve').innerText = pct(lve, eve) + '%';
-        document.getElementById('general').innerText = pct(lws + lve, ews + eve) + '%';
+        document.getElementById('ws').innerText       = pct(lws, ews) + '%';
+        document.getElementById('ve').innerText       = pct(lve, eve) + '%';
+        document.getElementById('general').innerText  = pct(lws + lve, ews + eve) + '%';
 
         const totalPlan = datos.reduce((s, r) => s + (parseInt(r.Planificado_Marca) || 0), 0);
-        const totalExec = datos.reduce((s, r) => s + (parseInt(r.Ejecutado_Marca) || 0), 0);
+        const totalExec = datos.reduce((s, r) => s + (parseInt(r.Ejecutado_Marca)  || 0), 0);
         document.getElementById('ejecucionPlan').innerText = pct(totalExec, totalPlan) + '%';
 
-        // Agrupar por zona
-        let zonas = {};
-        datos.forEach(r => {
-            if (!zonas[r.Zona]) zonas[r.Zona] = { plan: 0, exec: 0, ews: 0, lws: 0, eve: 0, lve: 0 };
-            zonas[r.Zona].plan += parseInt(r.Planificado_Marca) || 0;
-            zonas[r.Zona].exec += parseInt(r.Ejecutado_Marca) || 0;
-            zonas[r.Zona].ews  += +r.Envios_WS || 0;
-            zonas[r.Zona].lws  += +r.Leidos_WS || 0;
-            zonas[r.Zona].eve  += +r.Envios_VivaEngage || 0;
-            zonas[r.Zona].lve  += +r.Leidos_VivaEngage || 0;
-        });
+        const zonasData  = agrupar(datos, 'Zona');
+        const marcasData = agrupar(datos, 'Marca');
+        const pilaresData = agrupar(datos, 'Pilar');
 
-        const zonasOrdenadas = Object.entries(zonas).sort((a, b) => b[1].exec - a[1].exec);
-
-        // Agrupar por marca
-        let marcas = {};
-        datos.forEach(r => {
-            if (!marcas[r.Marca]) marcas[r.Marca] = { plan: 0, exec: 0, ews: 0, lws: 0, eve: 0, lve: 0 };
-            marcas[r.Marca].plan += parseInt(r.Planificado_Marca) || 0;
-            marcas[r.Marca].exec += parseInt(r.Ejecutado_Marca) || 0;
-            marcas[r.Marca].ews  += +r.Envios_WS || 0;
-            marcas[r.Marca].lws  += +r.Leidos_WS || 0;
-            marcas[r.Marca].eve  += +r.Envios_VivaEngage || 0;
-            marcas[r.Marca].lve  += +r.Leidos_VivaEngage || 0;
-        });
-
-        const marcasOrdenadas = Object.entries(marcas).sort((a, b) => b[1].exec - a[1].exec);
-
-        // GRÁFICO 1: Mensajes por Zona (barras horizontales agrupadas)
+        // GRÁFICO 1: Mensajes por Zona — barras horizontales agrupadas
         if (zc) zc.destroy();
         zc = new Chart(document.getElementById('zonaChart').getContext('2d'), {
             type: 'bar',
             data: {
-                labels: zonasOrdenadas.map(x => x[0]),
+                labels: zonasData.map(x => x[0]),
                 datasets: [
                     {
                         label: 'Ejecutado',
-                        data: zonasOrdenadas.map(x => x[1].exec),
+                        data: zonasData.map(x => x[1].exec),
                         backgroundColor: '#c0392b',
-                        borderRadius: 6,
+                        borderRadius: 5,
                         borderSkipped: false,
-                        barThickness: 14
+                        barThickness: 12
                     },
                     {
                         label: 'Planificado',
-                        data: zonasOrdenadas.map(x => x[1].plan),
+                        data: zonasData.map(x => x[1].plan),
                         backgroundColor: '#95a5a6',
-                        borderRadius: 6,
+                        borderRadius: 5,
                         borderSkipped: false,
-                        barThickness: 14
+                        barThickness: 12
                     }
                 ]
             },
@@ -513,9 +507,7 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 animation: { duration: 800, easing: 'easeInOutQuart' },
-                plugins: {
-                    legend: { display: false }
-                },
+                plugins: { legend: { display: false } },
                 scales: {
                     x: {
                         beginAtZero: true,
@@ -532,40 +524,43 @@
                 afterDatasetsDraw(chart) {
                     const { ctx } = chart;
                     ctx.font = 'bold 11px Segoe UI';
-                    ctx.fillStyle = '#2c3e50';
                     ctx.textAlign = 'left';
                     chart.data.datasets.forEach((dataset, i) => {
                         chart.getDatasetMeta(i).data.forEach((bar, index) => {
-                            const { x, y } = bar.tooltipPosition();
-                            ctx.fillText(dataset.data[index], x + 6, y + 4);
+                            const val = dataset.data[index];
+                            if (val > 0) {
+                                ctx.fillStyle = '#2c3e50';
+                                const { x, y } = bar.tooltipPosition();
+                                ctx.fillText(val, x + 5, y + 4);
+                            }
                         });
                     });
                 }
             }]
         });
 
-        // GRÁFICO 2: Mensajes por Marca (barras verticales agrupadas)
+        // GRÁFICO 2: Mensajes por Marca — barras verticales agrupadas
         if (mc) mc.destroy();
         mc = new Chart(document.getElementById('marcaChart').getContext('2d'), {
             type: 'bar',
             data: {
-                labels: marcasOrdenadas.map(x => x[0]),
+                labels: marcasData.map(x => x[0]),
                 datasets: [
                     {
                         label: 'Ejecutado',
-                        data: marcasOrdenadas.map(x => x[1].exec),
+                        data: marcasData.map(x => x[1].exec),
                         backgroundColor: '#c0392b',
-                        borderRadius: 6,
+                        borderRadius: 5,
                         borderSkipped: false,
-                        barThickness: 28
+                        barThickness: 24
                     },
                     {
                         label: 'Planificado',
-                        data: marcasOrdenadas.map(x => x[1].plan),
+                        data: marcasData.map(x => x[1].plan),
                         backgroundColor: '#95a5a6',
-                        borderRadius: 6,
+                        borderRadius: 5,
                         borderSkipped: false,
-                        barThickness: 28
+                        barThickness: 24
                     }
                 ]
             },
@@ -573,9 +568,7 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 animation: { duration: 800, easing: 'easeInOutQuart' },
-                plugins: {
-                    legend: { display: false }
-                },
+                plugins: { legend: { display: false } },
                 scales: {
                     y: {
                         beginAtZero: true,
@@ -592,12 +585,15 @@
                 afterDatasetsDraw(chart) {
                     const { ctx } = chart;
                     ctx.font = 'bold 11px Segoe UI';
-                    ctx.fillStyle = '#2c3e50';
                     ctx.textAlign = 'center';
                     chart.data.datasets.forEach((dataset, i) => {
                         chart.getDatasetMeta(i).data.forEach((bar, index) => {
-                            const { x, y } = bar.tooltipPosition();
-                            ctx.fillText(dataset.data[index], x, y - 6);
+                            const val = dataset.data[index];
+                            if (val > 0) {
+                                ctx.fillStyle = '#2c3e50';
+                                const { x, y } = bar.tooltipPosition();
+                                ctx.fillText(val, x, y - 6);
+                            }
                         });
                     });
                 }
@@ -605,26 +601,31 @@
         });
 
         // TABLA 1: Lectura por Zona
-        document.getElementById('tz').innerHTML = zonasOrdenadas.map(([zona, d]) => {
-            const pctWS = pct(d.lws, d.ews);
-            const pctVE = pct(d.lve, d.eve);
-            return `<tr>
+        document.getElementById('tz').innerHTML = zonasData.map(([zona, d]) =>
+            `<tr>
                 <td>${zona}</td>
-                <td><strong>${pctWS}%</strong></td>
-                <td><strong>${pctVE}%</strong></td>
-            </tr>`;
-        }).join('');
+                <td><strong>${pct(d.lws, d.ews)}%</strong></td>
+                <td><strong>${pct(d.lve, d.eve)}%</strong></td>
+            </tr>`
+        ).join('');
 
-        // TABLA 2: Detalle por Marca
-        document.getElementById('tm').innerHTML = marcasOrdenadas.map(([marca, d]) => {
-            const pctLec = pct(d.lws + d.lve, d.ews + d.eve);
-            return `<tr>
+        // TABLA 2: Lectura por Marca
+        document.getElementById('tm').innerHTML = marcasData.map(([marca, d]) =>
+            `<tr>
                 <td>${marca}</td>
-                <td><strong>${pctLec}%</strong></td>
-                <td>${d.plan}</td>
-                <td>${d.exec}</td>
-            </tr>`;
-        }).join('');
+                <td><strong>${pct(d.lws, d.ews)}%</strong></td>
+                <td><strong>${pct(d.lve, d.eve)}%</strong></td>
+            </tr>`
+        ).join('');
+
+        // TABLA 3: Lectura por Pilar
+        document.getElementById('tp').innerHTML = pilaresData.map(([pilar, d]) =>
+            `<tr>
+                <td>${pilar}</td>
+                <td><strong>${pct(d.lws, d.ews)}%</strong></td>
+                <td><strong>${pct(d.lve, d.eve)}%</strong></td>
+            </tr>`
+        ).join('');
     }
 </script>
 </body>
