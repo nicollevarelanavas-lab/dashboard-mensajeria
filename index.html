@@ -483,24 +483,26 @@
             type: 'bar',
             data: {
                 labels: zonasData.map(x => x[0]),
-                datasets: [
-                    {
-                        label: 'Ejecutado',
-                        data: zonasData.map(x => x[1].exec),
-                        backgroundColor: '#c0392b',
-                        borderRadius: 5,
-                        borderSkipped: false,
-                        barThickness: 18
-                    },
-                    {
-                        label: 'Planificado',
-                        data: zonasData.map(x => x[1].plan),
-                        backgroundColor: '#95a5a6',
-                        borderRadius: 0,
-                        borderSkipped: false,
-                        barThickness: 18
-                    }
-                ]
+datasets: [
+    {
+        label: 'Planificado',
+        data: zonasData.map(x => x[1].plan),
+        backgroundColor: '#7f8c8d',
+        borderRadius: 0,
+        barThickness: 24,
+        categoryPercentage: 0.9,
+        barPercentage: 1
+    },
+    {
+        label: 'Ejecutado',
+        data: zonasData.map(x => x[1].exec),
+        backgroundColor: '#c0392b',
+        borderRadius: 0,
+        barThickness: 16,
+        categoryPercentage: 0.9,
+        barPercentage: 1
+    }
+]
             },
             options: {
                 indexAxis: 'y',
@@ -510,40 +512,31 @@
                 plugins: { legend: { display: false } },
 scales: {
     x: {
-        stacked: true,
-        display: false
+        display: false,
+        grid: {
+            display: false
+        },
+        border: {
+            display: false
+        }
     },
     y: {
-        stacked: true,
         grid: {
+            display: false
+        },
+        border: {
             display: false
         },
         ticks: {
             color: '#202124',
             font: {
+                size: 12,
                 weight: 'bold'
             }
         }
     }
 }
-            },
-            plugins: [{
-                afterDatasetsDraw(chart) {
-                    const { ctx } = chart;
-                    ctx.font = 'bold 11px Segoe UI';
-                    ctx.textAlign = 'left';
-                    chart.data.datasets.forEach((dataset, i) => {
-                        chart.getDatasetMeta(i).data.forEach((bar, index) => {
-                            const val = dataset.data[index];
-                            if (val > 0) {
-                                ctx.fillStyle = '#2c3e50';
-                                const { x, y } = bar.tooltipPosition();
-                                ctx.fillText(val, x + 5, y + 4);
-                            }
-                        });
-                    });
-                }
-            }]
+            plugins: []
         });
 
         // GRÁFICO 2: Mensajes por Marca — barras verticales agrupadas
