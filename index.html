@@ -504,39 +504,47 @@ datasets: [
     }
 ]
             },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: { duration: 800, easing: 'easeInOutQuart' },
-                plugins: { legend: { display: false } },
-scales: {
-    x: {
-        display: false,
-        grid: {
-            display: false
-        },
-        border: {
+options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: {
+        duration: 800,
+        easing: 'easeInOutQuart'
+    },
+    plugins: {
+        legend: {
             display: false
         }
     },
-    y: {
-        grid: {
-            display: false
+    scales: {
+        x: {
+            display: false,
+            grid: {
+                display: false
+            },
+            border: {
+                display: false
+            }
         },
-        border: {
-            display: false
-        },
-        ticks: {
-            color: '#202124',
-            font: {
-                size: 12,
-                weight: 'bold'
+        y: {
+            grid: {
+                display: false
+            },
+            border: {
+                display: false
+            },
+            ticks: {
+                color: '#202124',
+                font: {
+                    size: 12,
+                    weight: 'bold'
+                }
             }
         }
     }
+}
 },
-            plugins: []
         });
 
         // GRÁFICO 2: Mensajes por Marca — barras verticales agrupadas
