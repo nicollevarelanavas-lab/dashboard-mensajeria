@@ -498,7 +498,7 @@
                         backgroundColor: '#95a5a6',
                         borderRadius: 5,
                         borderSkipped: false,
-                        barThickness: 12
+                        barThickness: 18
                     }
                 ]
             },
@@ -508,17 +508,24 @@
                 maintainAspectRatio: false,
                 animation: { duration: 800, easing: 'easeInOutQuart' },
                 plugins: { legend: { display: false } },
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        ticks: { color: '#5f6368', precision: 0 },
-                        grid: { color: 'rgba(0,0,0,0.05)' }
-                    },
-                    y: {
-                        grid: { display: false },
-                        ticks: { color: '#202124', font: { size: 12 } }
-                    }
-                }
+scales: {
+    x: {
+        stacked: true,
+        display: false
+    },
+    y: {
+        stacked: true,
+        grid: {
+            display: false
+        },
+        ticks: {
+            color: '#202124',
+            font: {
+                weight: 'bold'
+            }
+        }
+    }
+}
             },
             plugins: [{
                 afterDatasetsDraw(chart) {
@@ -570,16 +577,17 @@
                 animation: { duration: 800, easing: 'easeInOutQuart' },
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { color: '#5f6368', precision: 0 },
-                        grid: { color: 'rgba(0,0,0,0.05)' }
-                    },
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: '#202124', font: { size: 12 } }
-                    }
-                }
+    x: {
+        stacked: true,
+        grid: {
+            display: false
+        }
+    },
+    y: {
+        stacked: true,
+        display: false
+    }
+}
             },
             plugins: [{
                 afterDatasetsDraw(chart) {
