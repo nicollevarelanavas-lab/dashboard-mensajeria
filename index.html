@@ -150,8 +150,7 @@
         .dot-ejecutado { background: #c0392b; }
         .dot-planificado { background: #95a5a6; }
 
-        .chart-wrapper { position: relative; height: 320px; }
-        .chart-wrapper.tall { height: 380px; }
+        .chart-wrapper { position: relative; height: 340px; }
 
         .tables-grid {
             display: grid;
@@ -168,7 +167,6 @@
         }
 
         .table-title { font-size: 15px; font-weight: 700; color: #1a2a47; margin-bottom: 16px; }
-
         .table-wrapper { max-height: 350px; overflow-y: auto; border-radius: 8px; }
 
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -199,19 +197,13 @@
             font-size: 13px;
         }
 
-        @media (max-width: 1200px) {
-            .tables-grid { grid-template-columns: 1fr 1fr; }
-        }
-
+        @media (max-width: 1200px) { .tables-grid { grid-template-columns: 1fr 1fr; } }
         @media (max-width: 1024px) {
             .charts-grid { grid-template-columns: 1fr; }
             .kpis-row { grid-template-columns: 1fr 1fr; }
         }
-
         @media (max-width: 768px) {
-            .filtros { grid-template-columns: 1fr; }
-            .kpis-row { grid-template-columns: 1fr; }
-            .tables-grid { grid-template-columns: 1fr; }
+            .filtros, .kpis-row, .tables-grid { grid-template-columns: 1fr; }
             .chart-wrapper { height: 260px; }
         }
     </style>
@@ -291,7 +283,7 @@
                         <div class="legend-item"><div class="legend-dot dot-planificado"></div> Planificado</div>
                     </div>
                 </div>
-                <div class="chart-wrapper tall"><canvas id="zonaChart"></canvas></div>
+                <div class="chart-wrapper"><canvas id="zonaChart"></canvas></div>
             </div>
             <div class="chart-card">
                 <div class="chart-header">
@@ -301,7 +293,7 @@
                         <div class="legend-item"><div class="legend-dot dot-planificado"></div> Planificado</div>
                     </div>
                 </div>
-                <div class="chart-wrapper tall"><canvas id="marcaChart"></canvas></div>
+                <div class="chart-wrapper"><canvas id="marcaChart"></canvas></div>
             </div>
         </div>
 
@@ -310,13 +302,7 @@
                 <div class="table-title">📍 Lectura por Zona</div>
                 <div class="table-wrapper">
                     <table>
-                        <thead>
-                            <tr>
-                                <th>Zona</th>
-                                <th>% WS</th>
-                                <th>% Viva</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>Zona</th><th>% WS</th><th>% Viva</th></tr></thead>
                         <tbody id="tz"></tbody>
                     </table>
                 </div>
@@ -325,13 +311,7 @@
                 <div class="table-title">🏷️ Lectura por Marca</div>
                 <div class="table-wrapper">
                     <table>
-                        <thead>
-                            <tr>
-                                <th>Marca</th>
-                                <th>% WS</th>
-                                <th>% Viva</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>Marca</th><th>% WS</th><th>% Viva</th></tr></thead>
                         <tbody id="tm"></tbody>
                     </table>
                 </div>
@@ -340,13 +320,7 @@
                 <div class="table-title">🎯 Lectura por Pilar</div>
                 <div class="table-wrapper">
                     <table>
-                        <thead>
-                            <tr>
-                                <th>Pilar</th>
-                                <th>% WS</th>
-                                <th>% Viva</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>Pilar</th><th>% WS</th><th>% Viva</th></tr></thead>
                         <tbody id="tp"></tbody>
                     </table>
                 </div>
@@ -359,7 +333,6 @@
     const SHEET_URL = 'https://opensheet.elk.sh/1RC1VLZsbR0hpH8XuQUPT78A5RZDgiqyj6euXyxWROmQ/DATOS';
     let datosCompletos = [];
     let zc, mc;
-
     const ORDEN_FILTROS = ['mes', 'semana', 'zona', 'pilar', 'marca'];
 
     fetch(SHEET_URL)
@@ -367,6 +340,17 @@
         .then(d => {
             datosCompletos = d;
             inicializarFiltros();
+
+            // Restaurar mes guardado
+            const mesGuardado = localStorage.getItem('filtro_mes');
+            if (mesGuardado) {
+                const select = document.getElementById('mes');
+                if ([...select.options].some(o => o.value === mesGuardado)) {
+                    select.value = mesGuardado;
+                    onFiltroChange('mes');
+                    return;
+                }
+            }
             aplicarFiltros();
         })
         .catch(err => {
@@ -374,18 +358,18 @@
                 `<div class="error-msg">Error al cargar datos: ${err.message}</div>`;
         });
 
-    function getCampo(filtro) {
-        return { mes: 'Mes', semana: 'Semana', zona: 'Zona', pilar: 'Pilar', marca: 'Marca' }[filtro];
+    function getCampo(f) {
+        return { mes: 'Mes', semana: 'Semana', zona: 'Zona', pilar: 'Pilar', marca: 'Marca' }[f];
     }
 
     function getValoresFiltrados(filtroId) {
         const idx = ORDEN_FILTROS.indexOf(filtroId);
-        let datosFiltrados = datosCompletos;
+        let df = datosCompletos;
         ORDEN_FILTROS.slice(0, idx).forEach(f => {
-            const val = document.getElementById(f).value;
-            if (val) datosFiltrados = datosFiltrados.filter(r => r[getCampo(f)] === val);
+            const v = document.getElementById(f).value;
+            if (v) df = df.filter(r => r[getCampo(f)] === v);
         });
-        return [...new Set(datosFiltrados.map(r => r[getCampo(filtroId)]))].filter(Boolean).sort();
+        return [...new Set(df.map(r => r[getCampo(filtroId)]))].filter(Boolean).sort();
     }
 
     function inicializarFiltros() {
@@ -407,24 +391,27 @@
     }
 
     function onFiltroChange(filtroId) {
+        // Guardar mes en localStorage cuando cambia
+        if (filtroId === 'mes') {
+            localStorage.setItem('filtro_mes', document.getElementById('mes').value);
+        }
         const idx = ORDEN_FILTROS.indexOf(filtroId);
         ORDEN_FILTROS.slice(idx + 1).forEach(f => actualizarOpcionesFiltro(f));
         aplicarFiltros();
     }
 
     function aplicarFiltros() {
-        const mes   = document.getElementById('mes').value;
-        const semana = document.getElementById('semana').value;
-        const zona  = document.getElementById('zona').value;
-        const pilar = document.getElementById('pilar').value;
-        const marca = document.getElementById('marca').value;
+        const vals = ORDEN_FILTROS.reduce((acc, f) => {
+            acc[f] = document.getElementById(f).value;
+            return acc;
+        }, {});
 
         const datos = datosCompletos.filter(r =>
-            (!mes    || r.Mes    === mes)    &&
-            (!semana || r.Semana === semana) &&
-            (!zona   || r.Zona   === zona)   &&
-            (!pilar  || r.Pilar  === pilar)  &&
-            (!marca  || r.Marca  === marca)
+            (!vals.mes    || r.Mes    === vals.mes)    &&
+            (!vals.semana || r.Semana === vals.semana) &&
+            (!vals.zona   || r.Zona   === vals.zona)   &&
+            (!vals.pilar  || r.Pilar  === vals.pilar)  &&
+            (!vals.marca  || r.Marca  === vals.marca)
         );
 
         renderizar(datos);
@@ -433,18 +420,95 @@
     function pct(a, b) { return b ? Math.round(a / b * 100) : 0; }
 
     function agrupar(datos, campo) {
-        const grupos = {};
+        const g = {};
         datos.forEach(r => {
-            const key = r[campo] || 'Sin datos';
-            if (!grupos[key]) grupos[key] = { plan: 0, exec: 0, ews: 0, lws: 0, eve: 0, lve: 0 };
-            grupos[key].plan += parseInt(r.Planificado_Marca) || 0;
-            grupos[key].exec += parseInt(r.Ejecutado_Marca)  || 0;
-            grupos[key].ews  += +r.Envios_WS         || 0;
-            grupos[key].lws  += +r.Leidos_WS         || 0;
-            grupos[key].eve  += +r.Envios_VivaEngage  || 0;
-            grupos[key].lve  += +r.Leidos_VivaEngage  || 0;
+            const k = r[campo] || 'Sin datos';
+            if (!g[k]) g[k] = { plan: 0, exec: 0, ews: 0, lws: 0, eve: 0, lve: 0 };
+            g[k].plan += parseInt(r.Planificado_Marca) || 0;
+            g[k].exec += parseInt(r.Ejecutado_Marca)  || 0;
+            g[k].ews  += +r.Envios_WS        || 0;
+            g[k].lws  += +r.Leidos_WS        || 0;
+            g[k].eve  += +r.Envios_VivaEngage || 0;
+            g[k].lve  += +r.Leidos_VivaEngage || 0;
         });
-        return Object.entries(grupos).sort((a, b) => b[1].exec - a[1].exec);
+        return Object.entries(g).sort((a, b) => b[1].exec - a[1].exec);
+    }
+
+    // Plugin para mostrar números dentro de las barras
+    const labelPlugin = {
+        afterDatasetsDraw(chart) {
+            const { ctx } = chart;
+            chart.data.datasets.forEach((dataset, i) => {
+                chart.getDatasetMeta(i).data.forEach((bar, index) => {
+                    const val = dataset.data[index];
+                    if (!val || val === 0) return;
+
+                    const { x, y } = bar.tooltipPosition();
+                    const isHorizontal = chart.options.indexAxis === 'y';
+
+                    ctx.save();
+                    ctx.font = 'bold 11px Segoe UI';
+                    ctx.fillStyle = 'white';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    if (isHorizontal) {
+                        ctx.fillText(val, x / 2 + bar.base / 2, y);
+                    } else {
+                        ctx.fillText(val, x, y + 12);
+                    }
+                    ctx.restore();
+                });
+            });
+        }
+    };
+
+    function crearGraficoHorizontal(canvasId, labels, dataExec, dataPlan) {
+        return new Chart(document.getElementById(canvasId).getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: 'Ejecutado',
+                        data: dataExec,
+                        backgroundColor: '#c0392b',
+                        borderSkipped: false,
+                        borderRadius: 3,
+                        barThickness: 16
+                    },
+                    {
+                        label: 'Planificado',
+                        data: dataPlan,
+                        backgroundColor: '#95a5a6',
+                        borderSkipped: false,
+                        borderRadius: 3,
+                        barThickness: 16
+                    }
+                ]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 700, easing: 'easeInOutQuart' },
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0,0,0,0.04)' },
+                        ticks: { color: '#5f6368', precision: 0, font: { size: 11 } },
+                        border: { display: false }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { color: '#202124', font: { size: 12, weight: 'bold' } },
+                        border: { display: false }
+                    }
+                }
+            },
+            plugins: [labelPlugin]
+        });
     }
 
     function renderizar(datos) {
@@ -465,145 +529,35 @@
             lve += +r.Leidos_VivaEngage || 0;
         });
 
-        document.getElementById('ws').innerText       = pct(lws, ews) + '%';
-        document.getElementById('ve').innerText       = pct(lve, eve) + '%';
-        document.getElementById('general').innerText  = pct(lws + lve, ews + eve) + '%';
+        document.getElementById('ws').innerText      = pct(lws, ews) + '%';
+        document.getElementById('ve').innerText      = pct(lve, eve) + '%';
+        document.getElementById('general').innerText = pct(lws + lve, ews + eve) + '%';
 
         const totalPlan = datos.reduce((s, r) => s + (parseInt(r.Planificado_Marca) || 0), 0);
         const totalExec = datos.reduce((s, r) => s + (parseInt(r.Ejecutado_Marca)  || 0), 0);
         document.getElementById('ejecucionPlan').innerText = pct(totalExec, totalPlan) + '%';
 
-        const zonasData  = agrupar(datos, 'Zona');
-        const marcasData = agrupar(datos, 'Marca');
+        const zonasData   = agrupar(datos, 'Zona');
+        const marcasData  = agrupar(datos, 'Marca');
         const pilaresData = agrupar(datos, 'Pilar');
 
-// GRÁFICO 1: Mensajes por Zona
-if (zc) zc.destroy();
+        // GRÁFICO 1: Mensajes por Zona — horizontal agrupado
+        if (zc) zc.destroy();
+        zc = crearGraficoHorizontal(
+            'zonaChart',
+            zonasData.map(x => x[0]),
+            zonasData.map(x => x[1].exec),
+            zonasData.map(x => x[1].plan)
+        );
 
-zc = new Chart(document.getElementById('zonaChart').getContext('2d'), {
-    type: 'bar',
-    data: {
-        labels: zonasData.map(x => x[0]),
-        datasets: [
-            {
-                label: 'Ejecutado',
-                data: zonasData.map(x => x[1].exec),
-                backgroundColor: '#c0392b',
-                borderRadius: 0,
-                borderSkipped: false,
-                barThickness: 18
-            },
-            {
-                label: 'Planificado',
-                data: zonasData.map(x => x[1].plan),
-                backgroundColor: '#95a5a6',
-                borderRadius: 0,
-                borderSkipped: false,
-                barThickness: 18
-            }
-        ]
-    },
-    options: {
-        indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false
-            }
-        },
-        scales: {
-            x: {
-                stacked: true,
-                display: false,
-                grid: {
-                    display: false
-                },
-                border: {
-                    display: false
-                }
-            },
-            y: {
-                stacked: true,
-                grid: {
-                    display: false
-                },
-                border: {
-                    display: false
-                },
-                ticks: {
-                    color: '#202124',
-                    font: {
-                        size: 12,
-                        weight: 'bold'
-                    }
-                }
-            }
-        }
-    }
-});
-
-        // GRÁFICO 2: Mensajes por Marca — barras verticales agrupadas
+        // GRÁFICO 2: Mensajes por Marca — horizontal agrupado
         if (mc) mc.destroy();
-        mc = new Chart(document.getElementById('marcaChart').getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: marcasData.map(x => x[0]),
-                datasets: [
-                    {
-                        label: 'Ejecutado',
-                        data: marcasData.map(x => x[1].exec),
-                        backgroundColor: '#c0392b',
-                        borderRadius: 0,
-                        borderSkipped: false,
-                        barThickness: 24
-                    },
-                    {
-                        label: 'Planificado',
-                        data: marcasData.map(x => x[1].plan),
-                        backgroundColor: '#95a5a6',
-                        borderRadius: 5,
-                        borderSkipped: false,
-                        barThickness: 24
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: { duration: 800, easing: 'easeInOutQuart' },
-                plugins: { legend: { display: false } },
-                scales: {
-    x: {
-        stacked: true,
-        grid: {
-            display: false
-        }
-    },
-    y: {
-        stacked: true,
-        display: false
-    }
-}
-            },
-            plugins: [{
-                afterDatasetsDraw(chart) {
-                    const { ctx } = chart;
-                    ctx.font = 'bold 11px Segoe UI';
-                    ctx.textAlign = 'center';
-                    chart.data.datasets.forEach((dataset, i) => {
-                        chart.getDatasetMeta(i).data.forEach((bar, index) => {
-                            const val = dataset.data[index];
-                            if (val > 0) {
-                                ctx.fillStyle = '#2c3e50';
-                                const { x, y } = bar.tooltipPosition();
-                                ctx.fillText(val, x, y - 6);
-                            }
-                        });
-                    });
-                }
-            }]
-        });
+        mc = crearGraficoHorizontal(
+            'marcaChart',
+            marcasData.map(x => x[0]),
+            marcasData.map(x => x[1].exec),
+            marcasData.map(x => x[1].plan)
+        );
 
         // TABLA 1: Lectura por Zona
         document.getElementById('tz').innerHTML = zonasData.map(([zona, d]) =>
